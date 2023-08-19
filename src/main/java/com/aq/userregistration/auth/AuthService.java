@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class AuthenticationService {
+public class AuthService {
 
     private final UserRepository userRepository;
     private final JwtService jwtService;
@@ -36,8 +36,6 @@ public class AuthenticationService {
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        System.out.println("AuthenticationService: inside authenticate method");
-        System.out.println("Username : "+ request.getEmail() +" & Password: "+ request.getPassword());
         try{
             authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -49,14 +47,10 @@ public class AuthenticationService {
             e.getStackTrace();
         }
 
-        System.out.println("authenticated from authenticationManager: "+request.toString());
-
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow();
-        System.out.println("fetched user: "+ user.toString());
 
         String jwtToken = jwtService.generateToken(user);
-        System.out.println(" Token generated: "+jwtToken);
 
         return AuthenticationResponse.builder()
                 .token(jwtToken)
