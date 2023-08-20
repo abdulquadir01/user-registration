@@ -1,5 +1,6 @@
 package com.aq.userregistration.config;
 
+import com.aq.userregistration.constant.AppConstants;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -14,11 +15,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+
 @Service
 public class JwtService  {
 
     private final static String SECRET_KEY = "W0ml8XysVxUENvwA7biWfPJENYs7tDYJ6jHPLw9naIMrt3YZSFAUAWvVBtqzKIXE";
-    private final static Integer TOKEN_VALIDITY = 1000 * 60 * 60 * 24;
 
     public String extractUsername(String jwtToken) {
         return extractClaim(jwtToken, Claims::getSubject);
@@ -40,7 +41,7 @@ public class JwtService  {
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + TOKEN_VALIDITY))
+                .setExpiration(new Date(System.currentTimeMillis() + AppConstants.TOKEN_VALIDITY_IN_MS))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact(); // compact method will generate & return the token
     }

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 import java.util.Optional;
 
+
 public interface TokenRepository extends JpaRepository<Token, Long> {
 
     @Query("""
@@ -15,6 +16,6 @@ public interface TokenRepository extends JpaRepository<Token, Long> {
     List<Token> findAllValidTokensByUser(Long userId);
 
 
-    Optional<Token> findByToken(String token);
+    Optional<Token> findByAccessToken(String token);
 
 }

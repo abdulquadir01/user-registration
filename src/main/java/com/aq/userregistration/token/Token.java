@@ -19,13 +19,17 @@ public class Token {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    private String token;
+    private String accessToken;
 
     @Enumerated(EnumType.STRING)
     private TokenType tokenType;
 
     private boolean isExpired;
     private boolean isRevoked;
+
+    private int expiresIn;
+
+    private String refreshToken;
 
     @ManyToOne
     @JoinColumn(name = "user_id")

@@ -1,6 +1,5 @@
 package com.aq.userregistration.config;
 
-import com.aq.userregistration.token.Token;
 import com.aq.userregistration.token.TokenRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -52,7 +51,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
 //      cross-check the validity of token from DB
-            Boolean isTokenValid = tokenRepository.findByToken(jwtToken)
+            Boolean isTokenValid = tokenRepository.findByAccessToken(jwtToken)
                     .map(token -> !token.isExpired() && !token.isRevoked())
                     .orElse(false);
 

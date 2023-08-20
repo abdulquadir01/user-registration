@@ -9,6 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.stereotype.Service;
 
+
 @Service
 @AllArgsConstructor
 public class LogoutService  implements LogoutHandler {
@@ -26,7 +27,7 @@ public class LogoutService  implements LogoutHandler {
         }
 
         jwtToken = authHeader.substring(7);
-        Token storedToken = tokenRepository.findByToken(jwtToken).orElse(null);
+        Token storedToken = tokenRepository.findByAccessToken(jwtToken).orElse(null);
 
         if(storedToken != null){
             storedToken.setExpired(true);

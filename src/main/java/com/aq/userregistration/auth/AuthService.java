@@ -1,5 +1,6 @@
 package com.aq.userregistration.auth;
 
+import com.aq.userregistration.constant.AppConstants;
 import com.aq.userregistration.config.JwtService;
 import com.aq.userregistration.token.Token;
 import com.aq.userregistration.token.TokenRepository;
@@ -37,12 +38,16 @@ public class AuthService {
 
         String jwtToken = jwtService.generateToken(user);
 
-        saveUserToken(savedUser, jwtToken);
+        Token savedToken = saveUserToken(savedUser, jwtToken);
+
 
         return AuthenticationResponse.builder()
-                .token(jwtToken)
+                .username(request.getEmail())
+                .accessToken(jwtToken)
+                .accessExpiresIn(savedToken.getExpiresIn())
                 .build();
     }
+
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         try{
@@ -62,11 +67,13 @@ public class AuthService {
         String jwtToken = jwtService.generateToken(user);
 
         revokeAllUserTokens(user);
-//  first we revoke the existing tokens of an user then assign a new one which has not been revoked.
-        saveUserToken(user, jwtToken);
+//  first we revoke the existing tokens of a user then assign a new one which has not been revoked.
+        Token savedToken = saveUserToken(user, jwtToken);
 
         return AuthenticationResponse.builder()
-                .token(jwtToken)
+                .username(request.getEmail())
+                .accessToken(jwtToken)
+                .accessExpiresIn(savedToken.getExpiresIn())
                 .build();
     }
 
@@ -85,15 +92,16 @@ public class AuthService {
     }
 
 
-    private void saveUserToken(User user, String jwtToken) {
+    private Token saveUserToken(User user, String jwtToken) {
         Token token = Token.builder()
                 .user(user)
-                .token(jwtToken)
+                .accessToken(jwtToken)
                 .tokenType(TokenType.BEARER)
                 .isRevoked(false)
                 .isExpired(false)
+                .expiresIn(AppConstants.TOKEN_VALIDITY_IN_SEC)
                 .build();
-        tokenRepository.save(token);
+        return tokenRepository.save(token);
     }
 
 }
