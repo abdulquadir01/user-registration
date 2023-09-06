@@ -1,11 +1,13 @@
 package com.aq.userregistration.config;
 
 import com.aq.userregistration.constant.AppConstants;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +21,12 @@ import java.util.function.Function;
 @Service
 public class JwtService  {
 
-    private final static String SECRET_KEY = "W0ml8XysVxUENvwA7biWfPJENYs7tDYJ6jHPLw9naIMrt3YZSFAUAWvVBtqzKIXE";
+    @Value("${application.security.jwt.secret-key}")
+    private String SECRET_KEY;
+    @Value("${application.security.jwt.expiration}")
+    private long jwtExpiration;
+    @Value("${application.security.jwt.refresh-token.expiration}")
+    private long refreshExpiration;
 
     public String extractUsername(String jwtToken) {
         return extractClaim(jwtToken, Claims::getSubject);
@@ -31,17 +38,29 @@ public class JwtService  {
     }
 
 
-//    GENERATE TOKEN
+//    GENERATE TOKEN with UserDetails
     public String generateToken(UserDetails userDetails){
         return generateToken(new HashMap<>(), userDetails);
     }
+
+//    GENERATE TOKEN with extraClaims & userDetails
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails){
+        return buildToken(extraClaims, userDetails, jwtExpiration);
+    }
+
+//    GENERATE REFRESH-TOKEN with extraClaims & userDetails
+    public String generateRefreshToken(UserDetails userDetails){
+        return buildToken(new HashMap<>(), userDetails, refreshExpiration);
+    }
+
+// TOKEN building logic
+    private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration){
         return Jwts
                 .builder()
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + AppConstants.TOKEN_VALIDITY_IN_MS))
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact(); // compact method will generate & return the token
     }
@@ -73,7 +92,6 @@ public class JwtService  {
     private Key getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
         return Keys.hmacShaKeyFor(keyBytes);
-
     }
 
 }
