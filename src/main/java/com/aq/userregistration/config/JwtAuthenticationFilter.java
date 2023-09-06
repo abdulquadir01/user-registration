@@ -19,7 +19,7 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
-public class JwtAuthFilter extends OncePerRequestFilter {
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
@@ -29,7 +29,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain) throws ServletException, IOException {
+            @NonNull FilterChain filterChain
+    ) throws ServletException, IOException {
 
         final String authHeader = request.getHeader("Authorization");
         final String jwtToken;
@@ -40,17 +41,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
         jwtToken = authHeader.substring(7);
-//        extract the userEmail from JWT Token
+//    extract the userEmail from JWT Token
         userEmail = jwtService.extractUsername(jwtToken);
 
-        /*
-            SecurityContextHolder.getContext().getAuthentication() == null
-            this means that the user is not authenticated yet.
-         */
+/*
+    SecurityContextHolder.getContext().getAuthentication() == null
+    this means that the user is not authenticated yet.
+*/
         if(userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null){
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
-//      cross-check the validity of token from DB
+//  cross-check the validity of token from DB
             Boolean isTokenValid = tokenRepository.findByAccessToken(jwtToken)
                     .map(token -> !token.isExpired() && !token.isRevoked())
                     .orElse(false);

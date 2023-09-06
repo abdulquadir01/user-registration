@@ -15,11 +15,4 @@ public final class AppConstants {
         BEARER
     }
 
-//    list of user roles
-    public enum Role {
-        USER,
-        ADMIN
-    }
-
-
 }

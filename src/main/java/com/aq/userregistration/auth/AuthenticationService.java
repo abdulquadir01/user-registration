@@ -17,10 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -29,31 +26,30 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class AuthService {
+public class AuthenticationService {
 
     private final UserRepository userRepository;
     private final JwtService jwtService;
-    private final AuthenticationManager authenticationManager;
+    private final AuthenticationManager authManager;
     private final PasswordEncoder passwordEncoder;
-
     private final TokenRepository  tokenRepository;
 
     public AuthenticationResponse register(RegisterRequest request) {
         User user = User.builder()
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role(request.getRole())
-                .build();
+                    .firstName(request.getFirstName())
+                    .lastName(request.getLastName())
+                    .email(request.getEmail())
+                    .password(passwordEncoder.encode(request.getPassword()))
+                    .role(request.getRole())
+                    .build();
         User savedUser = userRepository.save(user);
 
         String jwtToken = jwtService.generateToken(savedUser);
         String refreshToken = jwtService.generateRefreshToken(savedUser);
 
-        System.out.println("From AuthService  register() ------");
-        System.out.println("accessToken: " + jwtToken);
-        System.out.println("refreshToken: " +refreshToken);
+//        System.out.println("From AuthService  register() ------");
+//        System.out.println("accessToken: " + jwtToken);
+//        System.out.println("refreshToken: " +refreshToken);
 
         Token savedToken = saveUserToken(savedUser, jwtToken, refreshToken);
 
@@ -65,10 +61,9 @@ public class AuthService {
                 .build();
     }
 
-
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         try{
-            authenticationManager.authenticate(
+            authManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
                         request.getPassword()
@@ -78,17 +73,18 @@ public class AuthService {
             e.getStackTrace();
         }
 
-        User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+        User user = userRepository.findByEmail(request.getEmail())
+                        .orElseThrow();
 
         String jwtToken = jwtService.generateToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
 
-        System.out.println("From AuthService  authenticate() ------");
-        System.out.println("accessToken: " + jwtToken);
-        System.out.println("refreshToken: " +refreshToken);
+//        System.out.println("From AuthService  authenticate() ------");
+//        System.out.println("accessToken: " + jwtToken);
+//        System.out.println("refreshToken: " +refreshToken);
 
         revokeAllUserTokens(user);
-//  first we revoke the existing tokens of a user then assign a new one which has not been revoked.
+//        first we revoke the existing tokens of a user then assign a new one which has not been revoked.
         Token savedToken = saveUserToken(user, jwtToken, refreshToken);
 
         return AuthenticationResponse.builder()
@@ -97,6 +93,19 @@ public class AuthService {
                 .refreshToken(refreshToken)
                 .accessExpiresIn(savedToken.getExpiresIn())
                 .build();
+    }
+
+    private Token saveUserToken(User user, String jwtToken, String refreshToken) {
+        Token token = Token.builder()
+                .user(user)
+                .accessToken(jwtToken)
+                .refreshToken(refreshToken)
+                .tokenType(TokenType.BEARER)
+                .isRevoked(false)
+                .isExpired(false)
+                .expiresIn(AppConstants.TOKEN_VALIDITY_IN_SEC)
+                .build();
+        return tokenRepository.save(token);
     }
 
     private void revokeAllUserTokens(User user){
@@ -111,20 +120,6 @@ public class AuthService {
             token.setRevoked(true);
         });
         tokenRepository.saveAll(validUserTokens);
-    }
-
-
-    private Token saveUserToken(User user, String jwtToken, String refreshToken) {
-        Token token = Token.builder()
-                .user(user)
-                .accessToken(jwtToken)
-                .refreshToken(refreshToken)
-                .tokenType(TokenType.BEARER)
-                .isRevoked(false)
-                .isExpired(false)
-                .expiresIn(AppConstants.TOKEN_VALIDITY_IN_SEC)
-                .build();
-        return tokenRepository.save(token);
     }
 
     public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {

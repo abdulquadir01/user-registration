@@ -26,7 +26,6 @@ public class User implements UserDetails {
 
     @Column(unique = true)
     private String email;
-
     private String password;
 
     @Enumerated(EnumType.STRING)
@@ -37,7 +36,7 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role.name()));
+        return role.getAuthorities();
     }
 
     @Override
