@@ -1,3 +1,3 @@
 # user-registration
 
-### basic user authentication & authorization appilcation
+### basic application for user authentication & authorization.
